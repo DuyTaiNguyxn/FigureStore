@@ -13,6 +13,6 @@ namespace FigureStore.Models
         public string? Description { get; set; }
 
         // Navigation property: Một Category có nhiều SubCategories
-        public ICollection<SubCategory> SubCategories { get; set; }
+        public ICollection<SubCategory>? SubCategories { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace FigureStore.Models
 {
@@ -18,7 +19,8 @@ namespace FigureStore.Models
 
         // Navigation property
         [ForeignKey("CategoryId")]
-        public Category Category { get; set; }
+        [JsonIgnore]
+        public Category? Category { get; set; }
 
     }
 }
