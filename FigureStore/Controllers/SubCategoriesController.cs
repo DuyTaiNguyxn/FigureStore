@@ -40,7 +40,6 @@ namespace FigureStore.Controllers
             return Ok(subCategories);
         }
 
-
         // GET: api/SubCategories/5
         [HttpGet("{id}")]
         public async Task<ActionResult<SubCategory>> GetSubCategory(int id)
