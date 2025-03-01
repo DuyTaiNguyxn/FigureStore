@@ -10,7 +10,8 @@ namespace FigureStore.Models
 
         // Đường dẫn đến ảnh (có thể là URL trên server hoặc cloud)
         [Required]
-        public string ImageUrl { get; set; }
+        public string URL { get; set; }
+        public bool IsPrimary { get; set; }
 
         // Khóa ngoại liên kết đến Product
         [Required]
