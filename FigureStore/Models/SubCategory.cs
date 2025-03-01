@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace FigureStore.Models
 {
-    public class SubCategory
+    public class SubCategory : IHasTimestamps
     {
         public int Id { get; set; }
 
@@ -14,13 +14,16 @@ namespace FigureStore.Models
 
         public string? Description { get; set; }
 
-        // Khóa ngoại liên kết đến Category
         public int CategoryId { get; set; }
 
-        // Navigation property
         [ForeignKey("CategoryId")]
         [JsonIgnore]
         public Category? Category { get; set; }
         public ICollection<Product>? Products { get; set; }
+
+        // Các thuộc tính timestamp
+        public DateTime CreateAt { get; set; }
+        public DateTime UpdateAt { get; set; }
     }
+
 }

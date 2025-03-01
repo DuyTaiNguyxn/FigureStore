@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace FigureStore.Models
 {
-    public class Product
+    public class Product : IHasTimestamps
     {
         public int Id { get; set; }
 
@@ -51,5 +51,10 @@ namespace FigureStore.Models
 
         // Cho phép đặt trước hay không
         public bool IsPreOrder { get; set; }
+        public ICollection<ProductImage>? ProductImages { get; set; }
+
+        // Các thuộc tính timestamp
+        public DateTime CreateAt { get; set; }
+        public DateTime UpdateAt { get; set; }
     }
 }

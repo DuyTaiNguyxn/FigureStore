@@ -58,6 +58,8 @@ namespace FigureStore.Controllers
             }
 
             _context.Entry(brand).State = EntityState.Modified;
+            // Không cập nhật giá trị CreateAt
+            _context.Entry(brand).Property(x => x.CreateAt).IsModified = false;
 
             try
             {

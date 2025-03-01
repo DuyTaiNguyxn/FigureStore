@@ -62,7 +62,6 @@ namespace FigureStore.Controllers
             _context.SubCategories.Add(subCategory);
             await _context.SaveChangesAsync();
 
-            // Trả về 201 Created kèm thông tin location của resource mới tạo
             return CreatedAtAction(nameof(GetSubCategory), new { id = subCategory.Id }, subCategory);
         }
 
@@ -74,8 +73,10 @@ namespace FigureStore.Controllers
             {
                 return BadRequest();
             }
-
             _context.Entry(subCategory).State = EntityState.Modified;
+
+            // Không cập nhật giá trị CreateAt
+            _context.Entry(subCategory).Property(x => x.CreateAt).IsModified = false;
 
             try
             {
@@ -83,7 +84,7 @@ namespace FigureStore.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!SubCategoryExists(id))
+                if (!_context.SubCategories.Any(e => e.Id == id))
                 {
                     return NotFound();
                 }
@@ -112,9 +113,5 @@ namespace FigureStore.Controllers
             return NoContent();
         }
 
-        private bool SubCategoryExists(int id)
-        {
-            return _context.SubCategories.Any(e => e.Id == id);
-        }
     }
 }

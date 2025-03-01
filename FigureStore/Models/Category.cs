@@ -2,7 +2,7 @@
 
 namespace FigureStore.Models
 {
-    public class Category
+    public class Category : IHasTimestamps
     {
         public int Id { get; set; }
 
@@ -14,5 +14,9 @@ namespace FigureStore.Models
 
         // Navigation property: Một Category có nhiều SubCategories
         public ICollection<SubCategory>? SubCategories { get; set; }
+
+        // Các thuộc tính timestamp
+        public DateTime CreateAt { get; set; }
+        public DateTime UpdateAt { get; set; }
     }
 }
