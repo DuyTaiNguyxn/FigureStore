@@ -19,6 +19,8 @@ namespace FigureStore.Data
         public DbSet<SubCategory> SubCategories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductImage> ProductImages { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +52,11 @@ namespace FigureStore.Data
                 .WithMany(c => c.SubCategories)
                 .HasForeignKey(s => s.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Cart>()
+               .HasMany(c => c.CartItems)
+               .WithOne(ci => ci.Cart)
+               .HasForeignKey(ci => ci.CartId);
 
             // Cấu hình cho các thuộc tính decimal của Product
             modelBuilder.Entity<Product>()

@@ -281,9 +281,176 @@ namespace FigureStore.Controllers
             return NoContent();
         }
 
-        private bool ProductExists(int id)
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchProducts(
+            [FromQuery] string? q,
+            [FromQuery] int? category,
+            [FromQuery] int? subcategory,
+            [FromQuery] int? brand,
+            [FromQuery] int? scaleRange,
+            [FromQuery] bool? preOrder,
+            [FromQuery] decimal? priceMin,
+            [FromQuery] decimal? priceMax,
+            [FromQuery] decimal? weightMin,
+            [FromQuery] decimal? weightMax
+        )
         {
-            return _context.Products.Any(p => p.Id == id);
+            var queryable = _context.Products
+                .Include(p => p.Brand)
+                .Include(p => p.SubCategory)
+                .Include(p => p.ProductImages)
+                .AsQueryable();
+
+            // 1. Lọc theo từ khóa
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var lowerQ = q.ToLower();
+                queryable = queryable.Where(p => p.Name.ToLower().Contains(lowerQ));
+            }
+
+            // 2. Lọc theo Category (dựa vào SubCategory.CategoryId)
+            if (category.HasValue && category.Value > 0)
+            {
+                queryable = queryable.Where(p => p.SubCategory.CategoryId == category.Value);
+            }
+
+            // 3. Lọc theo SubCategory
+            if (subcategory.HasValue && subcategory.Value > 0)
+            {
+                queryable = queryable.Where(p => p.SubCategory.Id == subcategory.Value);
+            }
+
+            // 4. Lọc theo Brand
+            if (brand.HasValue && brand.Value > 0)
+            {
+                queryable = queryable.Where(p => p.Brand.Id == brand.Value);
+            }
+
+            // 6. Lọc theo PreOrder
+            if (preOrder.HasValue)
+            {
+                queryable = queryable.Where(p => p.IsPreOrder == preOrder.Value);
+            }
+
+            // 7. Lọc theo Price
+            if (priceMin.HasValue)
+            {
+                queryable = queryable.Where(p => p.Price >= priceMin.Value);
+            }
+            if (priceMax.HasValue && priceMax.Value > 0)
+            {
+                queryable = queryable.Where(p => p.Price <= priceMax.Value);
+            }
+
+            // 8. Lọc theo Weight
+            if (weightMin.HasValue)
+            {
+                queryable = queryable.Where(p => p.Weight >= weightMin.Value);
+            }
+            if (weightMax.HasValue && weightMax.Value > 0)
+            {
+                queryable = queryable.Where(p => p.Weight <= weightMax.Value);
+            }
+
+            // 9. Lọc theo scale
+            if (scaleRange.HasValue && scaleRange.Value > 0)
+            {
+                // Định nghĩa danh sách các khoảng scale (theo index)
+                var scaleRanges = new List<(double min, double max)>
+                {
+                    (0, 0),                         // index 0: "All" (không lọc)
+                    (1.0/50, 1.0/40),               // index 1: "1:50 - 1:40"
+                    (1.0/40, 1.0/30),               // index 2: "1:40 - 1:30"
+                    (1.0/30, 1.0/20),               // index 3: "1:30 - 1:20"
+                    (1.0/20, 1.0/10),               // index 4: "1:20 - 1:10"
+                    (1.0/10, 1.0/1),                // index 5: "1:10 - 1:1"
+                    (1.0, 10.0),                    // index 6: "1:1 - 10:1"
+                    (10.0, 20.0)                    // index 7: "10:1 - 20:1"
+                };
+
+                int index = scaleRange.Value;
+                if (index >= 0 && index < scaleRanges.Count && index != 0)
+                {
+                    var (minVal, maxVal) = scaleRanges[index];
+                    // Load sản phẩm ra memory
+                    var productsList = await queryable.ToListAsync();
+
+                    // Lọc trong bộ nhớ: Parse chuỗi Scale (ví dụ "1:12") thành tỉ lệ số và so sánh
+                    productsList = productsList.Where(p =>
+                    {
+                        if (string.IsNullOrWhiteSpace(p.Scale))
+                            return false;
+                        var parts = p.Scale.Split(':');
+                        if (parts.Length != 2)
+                            return false;
+                        if (!double.TryParse(parts[0], out double left))
+                            return false;
+                        if (!double.TryParse(parts[1], out double right) || right == 0)
+                            return false;
+                        double ratio = left / right;
+                        return ratio >= minVal && ratio <= maxVal;
+                    }).ToList();
+
+                    // Project kết quả
+                    var result = productsList.Select(p => new
+                    {
+                        p.Id,
+                        p.Name,
+                        p.Description,
+                        p.Price,
+                        p.CostPrice,
+                        p.StockQuantity,
+                        p.Scale,
+                        p.Weight,
+                        p.IsPreOrder,
+                        Brand = new
+                        {
+                            p.Brand.Id,
+                            p.Brand.Name
+                        },
+                        SubCategory = new
+                        {
+                            p.SubCategory.Id,
+                            p.SubCategory.Name,
+                            p.SubCategory.CategoryId
+                        },
+                        PrimaryImage = p.ProductImages.FirstOrDefault(pi => pi.IsPrimary)
+                    }).ToList();
+
+                    return Ok(result);
+                }
+            }
+
+            // 10. Nếu scaleRange == 0 ("All"), project trực tiếp
+            var productsFinal = await queryable
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Description,
+                    p.Price,
+                    p.CostPrice,
+                    p.StockQuantity,
+                    p.Scale,
+                    p.Weight,
+                    p.IsPreOrder,
+                    Brand = new
+                    {
+                        p.Brand.Id,
+                        p.Brand.Name
+                    },
+                    SubCategory = new
+                    {
+                        p.SubCategory.Id,
+                        p.SubCategory.Name,
+                        p.SubCategory.CategoryId
+                    },
+                    PrimaryImage = p.ProductImages.FirstOrDefault(pi => pi.IsPrimary)
+                })
+                .ToListAsync();
+
+            return Ok(productsFinal);
         }
+
     }
 }
