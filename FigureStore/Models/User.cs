@@ -2,7 +2,7 @@
 
 namespace FigureStore.Models
 {
-    public class User
+    public class User : IHasTimestamps
     {
         public int Id { get; set; }
 
@@ -27,5 +27,8 @@ namespace FigureStore.Models
         public string Role { get; set; }
 
         public bool IsActive { get; set; }
+        // Các thuộc tính timestamp
+        public DateTime CreateAt { get; set; }
+        public DateTime UpdateAt { get; set; }
     }
 }

@@ -280,7 +280,6 @@ namespace FigureStore.Controllers
 
             return NoContent();
         }
-
         [HttpGet("search")]
         public async Task<IActionResult> SearchProducts(
             [FromQuery] string? q,
@@ -326,8 +325,8 @@ namespace FigureStore.Controllers
                 queryable = queryable.Where(p => p.Brand.Id == brand.Value);
             }
 
-            // 6. Lọc theo PreOrder
-            if (preOrder.HasValue)
+            // 6. Lọc theo PreOrder chỉ nếu client gửi tham số "preOrder"
+            if (Request.Query.ContainsKey("preOrder"))
             {
                 queryable = queryable.Where(p => p.IsPreOrder == preOrder.Value);
             }
@@ -352,21 +351,21 @@ namespace FigureStore.Controllers
                 queryable = queryable.Where(p => p.Weight <= weightMax.Value);
             }
 
-            // 9. Lọc theo scale
+            // 9. Lọc theo scale (scaleRange)
             if (scaleRange.HasValue && scaleRange.Value > 0)
             {
                 // Định nghĩa danh sách các khoảng scale (theo index)
                 var scaleRanges = new List<(double min, double max)>
-                {
-                    (0, 0),                         // index 0: "All" (không lọc)
-                    (1.0/50, 1.0/40),               // index 1: "1:50 - 1:40"
-                    (1.0/40, 1.0/30),               // index 2: "1:40 - 1:30"
-                    (1.0/30, 1.0/20),               // index 3: "1:30 - 1:20"
-                    (1.0/20, 1.0/10),               // index 4: "1:20 - 1:10"
-                    (1.0/10, 1.0/1),                // index 5: "1:10 - 1:1"
-                    (1.0, 10.0),                    // index 6: "1:1 - 10:1"
-                    (10.0, 20.0)                    // index 7: "10:1 - 20:1"
-                };
+        {
+            (0, 0),                         // index 0: "All" (không lọc)
+            (1.0/50, 1.0/40),               // index 1: "1:50 - 1:40"
+            (1.0/40, 1.0/30),               // index 2: "1:40 - 1:30"
+            (1.0/30, 1.0/20),               // index 3: "1:30 - 1:20"
+            (1.0/20, 1.0/10),               // index 4: "1:20 - 1:10"
+            (1.0/10, 1.0/1),                // index 5: "1:10 - 1:1"
+            (1.0, 10.0),                    // index 6: "1:1 - 10:1"
+            (10.0, 20.0)                    // index 7: "10:1 - 20:1"
+        };
 
                 int index = scaleRange.Value;
                 if (index >= 0 && index < scaleRanges.Count && index != 0)
@@ -421,7 +420,7 @@ namespace FigureStore.Controllers
                 }
             }
 
-            // 10. Nếu scaleRange == 0 ("All"), project trực tiếp
+            // 10. Nếu ScaleRange == 0 ("All"), project trực tiếp
             var productsFinal = await queryable
                 .Select(p => new
                 {

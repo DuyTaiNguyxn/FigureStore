@@ -77,7 +77,10 @@ public class AuthController : ControllerBase
             {
                 user.Id,
                 user.Name,
-                // Thêm các trường khác nếu cần
+                user.Email,
+                user.Phone,
+                user.Address,
+                user.AvatarURL
             }
         });
     }
